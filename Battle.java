@@ -4,24 +4,13 @@ public class Battle{
     static Scanner scanner = new Scanner(System.in);
     public static void main(String[] args) {
         boolean PlayingGame = true;
-        Sea sea1 = new Sea();
-        Sea sea2 = new Sea();
-
         Player p1 = new Player();
         p1.name = "Player1";
-        p1.sea = sea1;
-        Boat boat1 = new Boat();
-        boat1.x = new int[] {1,1,1};
-        boat1.y = new int[] {1,2,3}; // boat on a1, a2, a3
-        p1.fleet = new Boat[]{boat1};
+        p1.CreateFleet();
 
         Player p2 = new Player();
         p2.name = "Player2";
-        p2.sea = sea2;
-        Boat boat2 = new Boat();
-        boat2.x = new int[] {2,2,2};
-        boat2.y = new int[] {1,2,3}; // boat on b1, b2, b3
-        p2.fleet = new Boat[]{boat2};
+        p2.CreateFleet();
 
         Player CurrentPlayer = p1;
         Player WaitingPlayer = p2;
@@ -29,40 +18,51 @@ public class Battle{
             System.out.println(CurrentPlayer.name + " please enter coordinates to shoot."); //coordinates a1, A1, etc.
             String input = scanner.next();
             char[] shot_xy = input.toLowerCase().toCharArray();
-            int xs = shot_xy[0] - 96; //transfer a ascii value to int 0, etc.
-            int ys = shot_xy[1] - 48; //transfer 1 ascii value to int 0, etc.
+            int xs = shot_xy[0] - 97; //transfer a ascii value to int 0, etc.
+            int ys = shot_xy[1] - 49; //transfer 1 ascii value to int 0, etc.
 
-            if(CurrentPlayer.sea.DidIShootHereBefore(xs,ys)){
+            if(CurrentPlayer.DidIShootHereBefore(xs,ys)){
                 System.out.println("You already shot here, try again...");
             }else{
                 if(WaitingPlayer.fleet[0].AmIHit(xs,ys)){
                     System.out.println("Hit a boat!");
                     if(WaitingPlayer.fleet[0].DidISink()){
                         System.out.println("Boat has sunk.");
+                        PlayingGame = !(WaitingPlayer.EndGame());
                     }
                 }else{
                     System.out.println("You missed.");
                 }
-                CurrentPlayer.sea.AddShot(xs,ys);
+                CurrentPlayer.AddShot(xs,ys);
                 Player[] Players = SwitchTurns(CurrentPlayer, WaitingPlayer);
                 CurrentPlayer = Players[0];
                 WaitingPlayer = Players[1];
             }
         }
+        System.out.println(WaitingPlayer.name + " won the game!"); //players switch before this line is called
     }
     static Player[] SwitchTurns(Player c, Player w){
         return new Player[]{w,c};
     }
-
 }
-class Player{
+
+class Player extends Sea{
     String name;
-    Sea sea; //keep track of where you shot
     Boat[] fleet;
+    int destroyedboats;
     void CreateFleet(){
+        Boat boat = new Boat();
+        boat.x = new int[] {0,0,0};
+        boat.y = new int[] {0,1,2}; // boat on a1, a2, a3
+        fleet = new Boat[]{boat};
+    }
+    boolean EndGame(){
+        destroyedboats += 1;
+        return (destroyedboats == fleet.length);
     }
 }
-class Sea{
+
+abstract class Sea{
     int[][] field = new int[5][5];
     void AddShot(int x, int y){
         field[x][y] = 1;
