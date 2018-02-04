@@ -6,17 +6,17 @@ public class Battle{
         boolean playingGame = true;
         Player p1 = new Player();
         p1.name = "Player1";
-        p1.CreateFleet();
+        p1.sea.CreateFleet();
 
         Player p2 = new Player();
         p2.name = "Player2";
-        p2.CreateFleet();
+        p2.sea.CreateFleet();
 
         Player[] players = new Player[]{p1,p2} ;
         Shot shot = new Shot();
         while(playingGame) {
             String result = "You missed.";
-            System.out.println(players[0].name + " please enter coordinates to shoot."); //coordinates a1, A1, etc.
+            System.out.println(players[0].name + " please enter coordinates to shoot."); //a1, A1, ... , e5
 
             String input = scanner.next();
             shot.FireShot(input);
@@ -24,8 +24,8 @@ public class Battle{
             if(players[0].DidIShootHereBefore(shot.x,shot.y)){
                 result = "You already shot here, try again...";
             }else{
-                for (Boat b : players[1].fleet){
-                    if(b.AmIHit(shot.x,shot.y)){
+                for (Boat b : players[1].sea.fleet){
+                    if(b.AmIHit(shot.xy)){
                         result = "Hit a boat!";
                         if (b.DidISink()) {
                             result = "Boat has sunk.";
@@ -34,7 +34,7 @@ public class Battle{
                         break;
                     }
                 }
-                players[0].AddShotToSea(shot.x,shot.y);
+                players[0].AddShotToField(shot.x,shot.y);
                 players = SwitchTurns(players, players[0]);
             }
             System.out.println(result);
@@ -48,44 +48,42 @@ public class Battle{
     }
 }
 
-abstract class Sea{
-    int[][] field = new int[5][5];
-    void AddShotToSea(int x, int y){
+class Sea{
+    Boat[] fleet;
+    void CreateFleet(){
+        Boat boat1 = new Boat();
+        boat1.position = new String[] {"0 0","0 1","0 2"}; // boat on a1, a2, a3
+
+        Boat boat2 = new Boat();
+        boat2.position = new String[] {"3 4","4 4"}; // boat on d5, e5
+        fleet = new Boat[]{boat1, boat2};
+    }
+}
+
+class Player{
+    String name;
+    Sea sea = new Sea();
+    private int[][] field = new int[5][5];
+    private int destroyedboats;
+    void AddShotToField(int x, int y){
         field[x][y] = 1;
     }
     boolean DidIShootHereBefore(int x, int y){
         return (field[x][y] == 1);
     }
-}
-
-class Player extends Sea{
-    String name;
-    Boat[] fleet;
-    int destroyedboats;
-    void CreateFleet(){
-        Boat boat1 = new Boat();
-        boat1.xc = new int[] {0,0,0};
-        boat1.yc = new int[] {0,1,2}; // boat on a1, a2, a3
-
-        Boat boat2 = new Boat();
-        boat2.xc = new int[] {3,4};
-        boat2.yc = new int[] {4,4}; // boat on d5, e5
-        fleet = new Boat[]{boat1, boat2};
-    }
     boolean EndGame(){
         destroyedboats += 1;
-        return (destroyedboats == fleet.length);
+        return (destroyedboats == sea.fleet.length);
     }
 }
 
 class Boat {
-    int[] xc;
-    int[] yc;
-    int totalhits;
-    boolean AmIHit(int x_shot, int y_shot) {
+    String[] position;
+    private int totalhits;
+    boolean AmIHit(String shot) {
         boolean hit = false;
-        for (int i = 0; i < xc.length; i++) {
-            if (x_shot == xc[i] && y_shot == yc[i]) {
+        for (String p : position) {
+            if (p.equals(shot)){
                 hit = true;
                 totalhits += 1;
             }
@@ -93,16 +91,17 @@ class Boat {
         return hit;
     }
     boolean DidISink(){
-        return (totalhits == xc.length);
+        return (totalhits == position.length);
     }
 }
 
 class Shot{
     int x;
     int y;
+    String xy;
     void FireShot(String coord){
-        char[] shot_xy = coord.toLowerCase().toCharArray();
-        x = shot_xy[0] - 97; //transfer a ascii value to int 0, etc.
-        y = shot_xy[1] - 49; //transfer 1 ascii value to int 0, etc.
+        char[] shot = coord.toLowerCase().toCharArray();
+        x = shot[0]-97; y = shot[1]-49;
+        xy = String.valueOf(x)+" "+String.valueOf(y);
     }
 }
